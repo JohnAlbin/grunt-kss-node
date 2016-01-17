@@ -48,24 +48,36 @@ module.exports = function gruntKss(grunt) {
         var _buildKssCmd = function buildKssCmd(node, kssNpmPath, options, files) {
 
             var cmd = [
-                node,
-                kssNpmPath
-            ];
+                    node,
+                    kssNpmPath
+                ],
+                options;
             for (var optionName in options) {
 
-                grunt.log.debug('Reading option: ' + optionName);
+                if (options.hasOwnProperty(optionName)) {
+                    grunt.log.debug('Reading option: ' + optionName);
 
-                if (options.hasOwnProperty(optionName) && typeof options[optionName] === 'string') {
-                    grunt.log.debug('                > ' + options[optionName]);
-                    cmd.push('--' + optionName, options[optionName]);
+                    var values = options[optionName];
+                    if (!Array.isArray(values)) {
+                        values = [values];
+                    }
+                    for (var i = 0; i < values.length; i++) {
+                        grunt.log.debug('                > ' + values[i]);
+                        if (typeof values[i] === 'boolean') {
+                            cmd.push('--' + optionName);
+                        } else if (values[i] !== null && typeof values[i] !== 'undefined') {
+                            cmd.push('--' + optionName, values[i]);
+                        }
+                    }
                 }
             }
             files.forEach(function parseDestinationsFile(file) {
 
                 if (file.src.length === 0) {
-                    grunt.log.error('No source files founded 1');
+                    grunt.log.error('No source files found');
                     grunt.fail.warn('Wrong configuration', 1);
                 }
+                /*
                 fs.exists(file.src[0], function srcExists(exists) {
                     if (!exists) {
                         grunt.log.error('src config file path does not exist!');
@@ -77,8 +89,12 @@ module.exports = function gruntKss(grunt) {
                         grunt.file.mkdir(file.dest);
                     }
                 });
-                cmd.push('"' + file.src[0] + '"');
-                cmd.push('"' + file.dest + '"');
+                 */
+                cmd.push('--destination', '"' + file.dest + '"');
+                for (var i = 0; i < file.src.length; i++) {
+                    cmd.push('--source', '"' + file.src[i] + '"');
+                }
+
                 dest = file.dest;
             });
             return cmd;
